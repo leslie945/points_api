@@ -19,3 +19,6 @@
    `$ uvicorn main:app --reload`
 
 5. It is suggested to use swagger for testing, Swagger available at: http://localhost:8000/docs
+6. Tests can be run from main folder using following command:
+
+   `$ python -m unittest ./tests/test_main.py
