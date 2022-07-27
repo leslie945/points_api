@@ -9,8 +9,13 @@
     * uvicorn[standard] - v0.18.2
 
 ## How to Run
-# Install Python3
+1. Install Python3
+2. Use pip to install libraries listed in via pip section above
+3. Add Python bin to $PATH, example below
 
-    $ uvicorn main:app --reload
+   `PATH = <path_to_python>/bin:PATH`
+4. Run app using the command below:
 
-It is suggested to use swagger for testing, Swagger available at: http://localhost:8000/docs
+   `$ uvicorn main:app --reload`
+
+5. It is suggested to use swagger for testing, Swagger available at: http://localhost:8000/docs
