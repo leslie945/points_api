@@ -6,31 +6,24 @@ from fastapi import FastAPI, HTTPException
 from utils import list_contains
 from models import Database, PointRecord, SpendRequest, SpendResult
 
-
-#TODO -  define & split utils
-
 database: Database = Database()
 
 app = FastAPI()
 
-@app.get('/balance_times')
-async def get_points_balance_times() -> List[PointRecord]:
-    return database.read()
-
 @app.get('/balance')
 async def get_points_balance() -> Dict:
-    """
+    '''
         Get points balance
         ------------------
         
-        View points balance per payer
-    """
+        View points balance per payer or {'NO POINTS': -1}
+    '''
     # sort by payer
-    temp =database.read_sorted(lambda x: x.payer)
+    db = database.read_sorted(lambda x: x.payer)
     res: Dict = {}
 
     #loop & add up amounts
-    for record in temp:
+    for record in db:
         payer: str = record.payer
         amount: int = record.amount
         if payer in res:
@@ -38,11 +31,14 @@ async def get_points_balance() -> Dict:
         else:
             res[payer] = amount
     
-    return res
+    if res == {}:
+        return {'NO POINTS': -1}
+    else: 
+        return res
 
 @app.post('/points')
 async def add_points(records: List[PointRecord]):
-    """
+    '''
         Add points
         ----------
         
@@ -50,8 +46,8 @@ async def add_points(records: List[PointRecord]):
 
         Error States
         ------------
-        "Invalid transactions
-    """
+        Invalid transactions, at least one payer has a negative balance
+    '''
     db = database.read()
     for record in records:
         payer: str = record.payer
@@ -69,12 +65,12 @@ async def add_points(records: List[PointRecord]):
             db.append(record)
     item = list_contains(db, lambda x: x.amount < 0)
     if item is not None:
-        raise HTTPException(status_code=400, detail='Invalid transactions {item.payer} has negative balance' )
+        raise HTTPException(status_code=400, detail='Invalid transactions, at least one payer has a negative balance' )
     database.store(db)
 
 @app.put('/spend')
 async def spend_points(spend: SpendRequest) -> List[SpendResult]:
-    """
+    '''
         Spend
         -----
         
@@ -82,14 +78,14 @@ async def spend_points(spend: SpendRequest) -> List[SpendResult]:
 
         Exceptions
         ----------
-        "No points spent" - requested number of points <= 0
-        "Too few points to spend" - number of points requested > the total available across all payers
-    """
+        No points spent - requested number of points <= 0
+        Too few points to spend - number of points requested > the total available across all payers
+    '''
     db = database.read_sorted()
     res = []
     points: int = spend.points
     if points <= 0:
-        raise HTTPException(status_code=400, detail="No points spent")
+        raise HTTPException(status_code=400, detail='No points spent')
     for record in db:
         if points > 0 and record.amount > 0:
             comparison = record.amount - points
@@ -106,7 +102,7 @@ async def spend_points(spend: SpendRequest) -> List[SpendResult]:
             break
 
     if points > 0:
-        raise HTTPException(status_code=400, detail="Too few points to spend")
+        raise HTTPException(status_code=400, detail='Too few points to spend')
     else:
         database.store(db)
         return res

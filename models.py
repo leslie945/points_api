@@ -1,3 +1,5 @@
+import copy
+
 from datetime import datetime
 from typing import List
 
@@ -14,6 +16,10 @@ class PointRecord(BaseModel):
     payer: str
     amount: int
     timestamp: datetime
+
+    #used for test comparison
+    def __hash__(self):
+        return hash(tuple(self))
     
     #timestamp equivalency for list sort
     def __eq__(self, other) -> bool:
@@ -34,10 +40,10 @@ class Database():
         self._db = []
 
     def read(self):
-        return self._db.copy()
+        return copy.deepcopy(self._db)
 
     def store(self, db):
         self._db = db
 
-    def read_sorted(self):
-        return sorted(self._db)
+    def read_sorted(self, key=None):
+        return sorted(self.read(), key=key)
